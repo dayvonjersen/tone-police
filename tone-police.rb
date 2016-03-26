@@ -1,5 +1,6 @@
 require "java"
 require "sinatra"
+require "json"
 
 $CLASSPATH << "./Synesketch/bin/"
 def getEmotion(message)
@@ -25,8 +26,28 @@ def getEmotion(message)
     return emo
 end
 
+before do
+    content_type 'application/json'
+end
+
+configure do
+    set :show_exceptions, false
+end
+
+not_found do
+    return {"error" => "not found"}.to_json
+end
+
+error do 
+    return {"error" => "error!!"}.to_json
+end
+
+get "/test500" do 
+    0/0
+end
+
 post "/" do 
     @msg = params[:message] || "testing"
     logger.info @msg
-    getEmotion(@msg) 
+    return {"emotion" => getEmotion(@msg)}.to_json
 end
