@@ -3,26 +3,21 @@ require "sinatra"
 require "json"
 
 $CLASSPATH << "./Synesketch/bin/"
+
 def getEmotion(message)
     e = JavaUtilities.get_proxy_class("synesketch.emotion.Empathyscope")
     es = e.getInstance().feel(message)
-    emo = "Uknown"
-    case es.getStrongestEmotion().getType()
-        when -1
-            emo = "Neutral"
-        when 0
-            emo = "Happiness"
-        when 1
-            emo = "Sadness"
-        when 2
-            emo = "Fear"
-        when 3
-            emo = "Anger"
-        when 4
-            emo = "Disgust"
-        when 5
-            emo = "Surprise"
-    end
+
+    emo = {
+        "Neutral" => es.getValence() == -1 ? 1.0 : 0.0,
+        "Happiness" => es.getHappinessWeight(),
+        "Sadness" => es.getSadnessWeight(),
+        "Fear" => es.getFearWeight(),
+        "Anger" => es.getAngerWeight(),
+        "Disgust" => es.getDisgustWeight(),
+        "Surprise" => es.getSurpriseWeight()
+    }
+
     return emo
 end
 
@@ -42,12 +37,14 @@ error do
     return {"error" => "error!!"}.to_json
 end
 
-get "/test500" do 
-    0/0
-end
-
 post "/" do 
-    @msg = params[:message] || "testing"
-    logger.info @msg
-    return {"emotion" => getEmotion(@msg)}.to_json
+    msg = params[:message]
+
+    if msg == ""
+        status 400
+        return {"error" => "missing \"message\" input parameter."}.to_json
+    end
+
+    #logger.info msg
+    return getEmotion(msg).to_json
 end
