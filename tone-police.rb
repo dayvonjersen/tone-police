@@ -52,6 +52,9 @@ post "/" do
         if cnt == 0
             emo = x
         else
+            if x.max.last == 0
+                next
+            end
             x.each do |key,score|
                 emo[key] += score
             end
