@@ -9,7 +9,7 @@ def getEmotion(message)
     es = e.getInstance().feel(message)
 
     emo = {
-        "Neutral" => es.getValence() == -1 ? 1.0 : 0.0,
+        "Neutral" => es.getValence()*-1,
         "Happiness" => es.getHappinessWeight(),
         "Sadness" => es.getSadnessWeight(),
         "Fear" => es.getFearWeight(),
@@ -45,6 +45,24 @@ post "/" do
         return {"error" => "missing \"message\" input parameter."}.to_json
     end
 
-    #logger.info msg
-    return getEmotion(msg).to_json
+    emo = {}
+    cnt = 0
+    msg.split("\n").each do |m|
+        x = getEmotion(m)
+        if cnt == 0
+            emo = x
+        else
+            x.each do |key,score|
+                emo[key] += score
+            end
+        end
+        cnt += 1
+    end
+    emo.each do |key, score|
+        emo[key] /= cnt
+    end
+
+    logger.info cnt
+    logger.info emo.to_json
+    return emo.to_json
 end
